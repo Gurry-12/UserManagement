@@ -23,6 +23,7 @@ namespace UserManagement.WebAPI.Controllers
                 return NotFound();
             }
             return Ok(user);
+
         }
     }
 }
