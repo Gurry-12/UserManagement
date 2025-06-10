@@ -4,7 +4,7 @@ namespace UserManagement.Infrastructure.Repository.AbstractRepository
 {
     public interface IUserRepository
     {
-        Task<User> GetUser(int id);
+        Task<User> GetUserById(int id);
         Task<List<User>> GetAllUsers();
 
         Task AddUserAsync(User user);
