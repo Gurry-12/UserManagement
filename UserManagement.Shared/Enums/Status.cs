@@ -1,9 +1,11 @@
 ﻿namespace UserManagement.Shared.Enums
 {
+    [Flags]  
     public enum Status
     {
-        Active,
-        Deactive,
-        Invited
+        None = 0,
+        Active = 1,
+        Deactive = 2,
+        Invited = 3
     }
 }

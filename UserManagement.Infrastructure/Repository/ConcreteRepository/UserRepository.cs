@@ -9,9 +9,6 @@ using System.Threading.Tasks;
 
 namespace UserManagement.Infrastructure.Repository.ConcreteRepository
 {
-    /// <summary>
-    /// Repository implementation for User entity operations
-    /// </summary>
     public class UserRepository : IUserRepository
     {
         private readonly UserManagementContext _context;
@@ -46,7 +43,7 @@ namespace UserManagement.Infrastructure.Repository.ConcreteRepository
         }
 
       
-        public async Task<List<User>> GetAllUsers()
+        public async Task<List<User>> GetAllUsersAsync()
         {
             try
             {
@@ -65,7 +62,7 @@ namespace UserManagement.Infrastructure.Repository.ConcreteRepository
         }
 
 
-        public async Task<User> GetUserById(int id)
+        public async Task<User> GetUserByIdAsync(int id)
         {
             try
             {
@@ -97,34 +94,20 @@ namespace UserManagement.Infrastructure.Repository.ConcreteRepository
             }
         }
 
-       
+
         public async Task UpdateUserAsync(User user)
         {
             try
             {
                 if (user == null)
-                {
                     throw new ArgumentNullException(nameof(user));
-                }
 
                 if (user.Id <= 0)
-                {
                     throw new ArgumentException("Invalid user ID", nameof(user));
-                }
 
-                var existingUser = await _context.Users.FindAsync(user.Id);
-                if (existingUser == null)
-                {
-                    throw new InvalidOperationException($"User with ID {user.Id} not found");
-                }
-
-                // Update only the properties that can be modified
-                existingUser.Name = user.Name;
-                existingUser.Email = user.Email;
-                existingUser.Role = user.Role;
-                // Don't update the Date field as it represents creation date
-
+                _context.Users.Update(user);
                 await _context.SaveChangesAsync();
+
                 _logger.LogInformation("Successfully updated user with ID {UserId}", user.Id);
             }
             catch (DbUpdateException ex)
@@ -133,6 +116,30 @@ namespace UserManagement.Infrastructure.Repository.ConcreteRepository
                 throw;
             }
         }
+
+        public async Task DeleteUserAsync(int id)
+        {
+            try
+            {
+                var user = await _context.Users.FindAsync(id);
+                if (user == null)
+                {
+                    _logger.LogWarning("Attempted to delete non-existing user with ID {UserId}", id);
+                    return;
+                }
+
+                _context.Users.Remove(user);
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation("Successfully deleted user with ID {UserId}", id);
+            }
+            catch (DbUpdateException ex)
+            {
+                _logger.LogError(ex, "Failed to delete user with ID {UserId}", id);
+                throw;
+            }
+        }
+
     }
 }
 
