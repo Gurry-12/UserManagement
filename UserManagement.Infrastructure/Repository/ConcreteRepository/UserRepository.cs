@@ -25,16 +25,10 @@ namespace UserManagement.Infrastructure.Repository.ConcreteRepository
         {
             try
             {
-                if (user == null)
-                {
-                    throw new ArgumentNullException(nameof(user));
-                }
-
                 await _context.Users.AddAsync(user);
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation("Successfully added user with ID {UserId}", user.Id);
-            }
+             }
             catch (DbUpdateException ex)
             {
                 _logger.LogError(ex, "Failed to add user to database");
@@ -51,8 +45,7 @@ namespace UserManagement.Infrastructure.Repository.ConcreteRepository
                     .AsNoTracking()
                     .ToListAsync();
 
-                _logger.LogInformation("Retrieved {Count} users from database", users.Count);
-                return users;
+               return users;
             }
             catch (Exception ex)
             {
@@ -62,30 +55,14 @@ namespace UserManagement.Infrastructure.Repository.ConcreteRepository
         }
 
 
-        public async Task<User> GetUserByIdAsync(int id)
+        public async Task<User?> GetUserByIdAsync(int id)
         {
             try
             {
-                if (id <= 0)
-                {
-                    _logger.LogWarning("Invalid user ID: {UserId}", id);
-                    return null;
-                }
-
-                var user = await _context.Users
+               return await _context.Users
                     .AsNoTracking()
                     .FirstOrDefaultAsync(u => u.Id == id);
-
-                if (user == null)
-                {
-                    _logger.LogInformation("User not found with ID: {UserId}", id);
-                }
-                else
-                {
-                    _logger.LogInformation("Retrieved user with ID: {UserId}", id);
-                }
-
-                return user;
+               
             }
             catch (Exception ex)
             {
@@ -99,16 +76,9 @@ namespace UserManagement.Infrastructure.Repository.ConcreteRepository
         {
             try
             {
-                if (user == null)
-                    throw new ArgumentNullException(nameof(user));
-
-                if (user.Id <= 0)
-                    throw new ArgumentException("Invalid user ID", nameof(user));
-
-                _context.Users.Update(user);
+                 _context.Users.Update(user);
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation("Successfully updated user with ID {UserId}", user.Id);
             }
             catch (DbUpdateException ex)
             {
@@ -122,16 +92,14 @@ namespace UserManagement.Infrastructure.Repository.ConcreteRepository
             try
             {
                 var user = await _context.Users.FindAsync(id);
-                if (user == null)
+                if (user is null)
                 {
-                    _logger.LogWarning("Attempted to delete non-existing user with ID {UserId}", id);
+                    _logger.LogWarning("Attempted to delete non-existent user with ID {UserId}", id);
                     return;
                 }
-
                 _context.Users.Remove(user);
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation("Successfully deleted user with ID {UserId}", id);
             }
             catch (DbUpdateException ex)
             {

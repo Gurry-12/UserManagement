@@ -6,7 +6,7 @@ namespace UserManagement.Application.Services.AbstractServices
     {
         Task AddUserAsync(AddUpdateUserDto user);
         Task<List<UserDto>> GetAllUsersAsync();
-        Task<UserDto> GetUserByIdAsync(int id);
+        Task<UserDto?> GetUserByIdAsync(int id);
         Task UpdateUserAsync(AddUpdateUserDto user);
         Task DeleteUserAsync(int id);
 

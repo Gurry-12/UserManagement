@@ -45,7 +45,7 @@ namespace UserManagement.WebAPI.Controllers
                     _logger.LogWarning("No users found");
                     return NotFound("No users found");
                 }
-                return Ok(users);
+                return users;
             }
             catch (Exception ex)
             {
@@ -305,9 +305,9 @@ namespace UserManagement.WebAPI.Controllers
 
         /// <summary>
         /// Get Summary of the Users 
-        /// 
         /// <returns>Summary of users</returns>
         /// 
+
 
         [HttpGet("GetUserSummary")]
         [ProducesResponseType(typeof(UserSummaryDto), StatusCodes.Status200OK)]

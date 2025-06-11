@@ -8,6 +8,7 @@ using System;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using UserManagement.Shared.Enums;
+using UserManagement.Application.Mappers;
 
 namespace UserManagement.Application.Services.ConcreteServices
 {
@@ -26,11 +27,9 @@ namespace UserManagement.Application.Services.ConcreteServices
         {
             try
             {
-                if (user == null)
-                {
-                    _logger.LogError("Attempted to create user with null data");
-                    throw new ArgumentNullException(nameof(user), "User data cannot be null");
-                }
+                if (user is null)
+                    throw new ArgumentNullException(nameof(user));
+
                 var combinedRoles = user.Role
                                    .Aggregate(Roles.None, (acc, next) => acc | next); // ✅ Combine roles
 
@@ -69,37 +68,17 @@ namespace UserManagement.Application.Services.ConcreteServices
             if (!users.Any())
                 return new List<UserDto>();
 
-            return users.Select(u => new UserDto
-            {
-                Id = u.Id,
-                Name = u.Name,
-                Email = u.Email,
-                Role = Enum.GetValues(typeof(Roles))
-               .Cast<Roles>()
-               .Where(r => r != Roles.None && u.Role.HasFlag(r)) // ✅ extract individual roles
-               .ToList(),
-                Date = u.Date
-            }).ToList();
+            return users.Select(u => u.ToDto()).ToList();
         }
 
 
-        public async Task<UserDto> GetUserByIdAsync(int id)
+        public async Task<UserDto?> GetUserByIdAsync(int id)
         {
             var user = await _userRepository.GetUserByIdAsync(id);
             if (user == null)
                 return null;
 
-            return new UserDto
-            {
-                Id = user.Id,
-                Name = user.Name,
-                Email = user.Email,
-                Role = Enum.GetValues(typeof(Roles))
-               .Cast<Roles>()
-               .Where(r => r != Roles.None && user.Role.HasFlag(r))
-               .ToList(),
-                Date = user.Date
-            };
+            return user?.ToDto();
 
         }
 
@@ -115,12 +94,7 @@ namespace UserManagement.Application.Services.ConcreteServices
 
                 
 
-                var existingUser = await _userRepository.GetUserByIdAsync(user.Id);
-                if (existingUser == null)
-                {
-                    _logger.LogWarning("User with ID {UserId} not found", user.Id);
-                    throw new KeyNotFoundException($"User with ID {user.Id} not found");
-                }
+                var existingUser = await FetchUserOrThrowAsync(user.Id);
 
                 // ✅ Only update the intended fields
                 existingUser.Name = user.Name.Trim();
@@ -145,15 +119,11 @@ namespace UserManagement.Application.Services.ConcreteServices
             {
                 if (id <= 0)
                 {
-                    _logger.LogError("Attempted to delete user with invalid ID {UserId}", id);
+                  
                     throw new ArgumentException("Invalid user ID", nameof(id));
                 }
-                var user = await _userRepository.GetUserByIdAsync(id);
-                if (user == null)
-                {
-                    _logger.LogWarning("Attempted to delete non-existing user with ID {UserId}", id);
-                    throw new KeyNotFoundException($"User with ID {id} not found");
-                }
+                var user = await FetchUserOrThrowAsync(id);
+
                 await _userRepository.DeleteUserAsync(id);
                 _logger.LogInformation("Successfully deleted user with ID {UserId}", id);
             }
@@ -197,9 +167,7 @@ namespace UserManagement.Application.Services.ConcreteServices
                 if (dto == null)
                     throw new ArgumentNullException(nameof(dto));
 
-                var user = await _userRepository.GetUserByIdAsync(dto.Id);
-                if (user == null)
-                    throw new KeyNotFoundException($"User with ID {dto.Id} not found");
+                var user = await FetchUserOrThrowAsync(dto.Id);
 
                 user.Action = dto.Action;
 
@@ -221,9 +189,7 @@ namespace UserManagement.Application.Services.ConcreteServices
                 if (dto == null)
                     throw new ArgumentNullException(nameof(dto));
 
-                var user = await _userRepository.GetUserByIdAsync(dto.Id);
-                if (user == null)
-                    throw new KeyNotFoundException($"User with ID {dto.Id} not found");
+                var user = await FetchUserOrThrowAsync(dto.Id);
 
                 user.Role = dto.Role.Aggregate(Roles.None, (acc, next) => acc | next);
 
@@ -245,9 +211,7 @@ namespace UserManagement.Application.Services.ConcreteServices
                 if (dto == null)
                     throw new ArgumentNullException(nameof(dto));
 
-                var user = await _userRepository.GetUserByIdAsync(dto.Id);
-                if (user == null)
-                    throw new KeyNotFoundException($"User with ID {dto.Id} not found");
+                var user = await FetchUserOrThrowAsync(dto.Id);
 
                 user.Status = dto.Status;
 
@@ -259,6 +223,16 @@ namespace UserManagement.Application.Services.ConcreteServices
                 _logger.LogError(ex, "Error updating status for user ID {UserId}", dto?.Id);
                 throw;
             }
+        }
+
+
+        // Helper to fetch or throw common logic
+        private async Task<User> FetchUserOrThrowAsync(int id)
+        {
+            var user = await _userRepository.GetUserByIdAsync(id);
+            if (user is null)
+                throw new KeyNotFoundException($"User {id} not found");
+            return user;
         }
 
     }
