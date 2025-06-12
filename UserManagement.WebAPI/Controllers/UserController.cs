@@ -10,7 +10,7 @@ namespace UserManagement.WebAPI.Controllers
     /// <summary>
     /// Controller for managing user operations
     /// </summary>
-    [Route("api/[controller]")]
+    [Route("api/v1/users")]
     [ApiController]
     [Produces("application/json")]
     public class UserController : ControllerBase
